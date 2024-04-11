@@ -36,18 +36,18 @@ class Enhanced_Autoload_Manager {
     // Display the plugin page
     function display_page() {
         global $wpdb;
-      // Get the total autoload size in MBs
-  		$total_autoload_size = $wpdb->get_var("SELECT SUM(LENGTH(option_value)) FROM {$wpdb->options} WHERE autoload = 'yes'");
-    	$total_autoload_size_mb = round($total_autoload_size / 1024 / 1024, 2);
+
+        // Get the total autoload size in MBs
+        $total_autoload_size = $wpdb->get_var("SELECT SUM(LENGTH(option_value)) FROM {$wpdb->options} WHERE autoload = 'yes'");
+        $total_autoload_size_mb = round($total_autoload_size / 1024 / 1024, 2);
 
         // Get the top 20 autoloads
         $autoloads = $wpdb->get_results("SELECT option_name, LENGTH(option_value) AS option_size FROM {$wpdb->options} WHERE autoload = 'yes' ORDER BY option_size DESC LIMIT 20");
 
         ?>
         <div class="wrap">
-          
             <h1><?php echo esc_html__( 'Enhanced Autoload Manager', 'enhanced-autoload-manager' ); ?></h1>
-          <h2><?php echo sprintf(esc_html__('Total Autoload Size: %s MB', 'enhanced-autoload-manager'), esc_html($total_autoload_size_mb)); ?></h2>
+            <h2><?php echo sprintf(esc_html__('Total Autoload Size: %s MB', 'enhanced-autoload-manager'), esc_html($total_autoload_size_mb)); ?></h2>
             <table class="wp-list-table widefat fixed striped">
                 <thead>
                     <tr>
@@ -65,8 +65,11 @@ class Enhanced_Autoload_Manager {
                             <td><?php echo esc_html( $autoload->option_name ); ?></td>
                             <td><?php echo esc_html( $size_display ); ?></td>
                             <td>
-                                <a href="<?php echo esc_url( wp_nonce_url( admin_url( 'tools.php?page=enhanced-autoload-manager&action=delete&option_name=' . urlencode( $autoload->option_name ) ), 'delete_autoload_' . $autoload->option_name ) ); ?>" class="eal-button eal-button-delete"><?php echo esc_html__( 'Delete', 'enhanced-autoload-manager' ); ?></a>
-                                <a href="<?php echo esc_url( wp_nonce_url( admin_url( 'tools.php?page=enhanced-autoload-manager&action=disable&option_name=' . urlencode( $autoload->option_name ) ), 'disable_autoload_' . $autoload->option_name ) ); ?>" class="eal-button eal-button-disable"><?php echo esc_html__( 'Disable', 'enhanced-autoload-manager' ); ?></a>
+                                <!-- The Nonce field is now displayed here -->
+                                <?php $delete_nonce = wp_create_nonce('delete_autoload_' . $autoload->option_name); ?>
+                                <?php $disable_nonce = wp_create_nonce('disable_autoload_' . $autoload->option_name); ?>
+                                <a href="<?php echo esc_url( admin_url( 'tools.php?page=enhanced-autoload-manager&action=delete&option_name=' . urlencode( $autoload->option_name ) . '&_wpnonce=' . $delete_nonce ) ); ?>" class="eal-button eal-button-delete"><?php echo esc_html__( 'Delete', 'enhanced-autoload-manager' ); ?></a>
+                                <a href="<?php echo esc_url( admin_url( 'tools.php?page=enhanced-autoload-manager&action=disable&option_name=' . urlencode( $autoload->option_name ) . '&_wpnonce=' . $disable_nonce ) ); ?>" class="eal-button eal-button-disable"><?php echo esc_html__( 'Disable', 'enhanced-autoload-manager' ); ?></a>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -80,19 +83,23 @@ class Enhanced_Autoload_Manager {
     function handle_actions() {
         global $wpdb;
 
-        if ( isset( $_GET['page'], $_GET['action'], $_GET['option_name'], $_GET['_wpnonce'] ) && $_GET['page'] === 'enhanced-autoload-manager' ) {
+        if ( isset( $_GET['page'], $_GET['action'], $_GET['option_name'] ) && $_GET['page'] === 'enhanced-autoload-manager' ) {
             $option_name = urldecode( $_GET['option_name'] );
             $action = $_GET['action'];
 
-            if ( wp_verify_nonce( $_GET['_wpnonce'], $action . '_autoload_' . $option_name ) ) {
-                if ( $action === 'delete' ) {
-                    $wpdb->delete( $wpdb->options, [ 'option_name' => $option_name ] );
-                } elseif ( $action === 'disable' ) {
-                    $wpdb->update( $wpdb->options, [ 'autoload' => 'no' ], [ 'option_name' => $option_name ] );
-                }
-                wp_redirect( admin_url( 'tools.php?page=enhanced-autoload-manager' ) );
-                exit;
+            // Check for nonce presence and validate it before processing the action.
+            $nonce_action = $action . '_autoload_' . $option_name;
+            if ( isset( $_GET['_wpnonce'] ) && ! wp_verify_nonce( $_GET['_wpnonce'], $nonce_action ) ) {
+                wp_die( 'Security check failed' );
             }
+
+            if ( $action === 'delete' ) {
+                $wpdb->delete( $wpdb->options, [ 'option_name' => $option_name ] );
+            } elseif ( $action === 'disable' ) {
+                $wpdb->update( $wpdb->options, [ 'autoload' => 'no' ], [ 'option_name' => $option_name ] );
+            }
+            wp_redirect( admin_url( 'tools.php?page=enhanced-autoload-manager' ) );
+            exit;
         }
     }
 }
