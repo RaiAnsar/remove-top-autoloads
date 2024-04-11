@@ -35,6 +35,7 @@ No, it's simple to use. Install and navigate to the Tools menu to start optimizi
 = Is it safe to delete autoload data? =
 Always make sure to backup your database before deleting data. While the plugin is safe to use, caution is always recommended.
 
+Git Repo Link: https://github.com/RaiAnsar/enhanced-autoload-manager
 == Changelog ==
 = 1.2 =
 * Added total autoload size display.
