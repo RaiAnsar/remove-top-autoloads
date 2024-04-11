@@ -1,0 +1,42 @@
+/* Styles for Enhanced Autoload Manager */
+.eal-button {
+    display: inline-block;
+    text-decoration: none;
+    padding: 6px 12px;
+    margin-right: 4px;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+    color: #fff;
+    text-align: center;
+    vertical-align: middle;
+  }
+  
+  /* Maintains the text color on hover for all buttons */
+  .eal-button:hover,
+  .eal-button-delete:hover,
+  .eal-button-disable:hover {
+    color: #fff !important; /* Add !important to override any other styles */
+  }
+  
+  .eal-button-delete {
+    background-color: #dc3545;
+  }
+  
+  .eal-button-delete:hover {
+    background-color: #c82333;
+  }
+  
+  .eal-button-disable {
+    background-color: #007bff;
+  }
+  
+  .eal-button-disable:hover {
+    background-color: #0069d9;
+  }
+  
+  /* Centering the action buttons */
+  th, td {
+    text-align: left;
+    vertical-align: middle;
+  }
+  
