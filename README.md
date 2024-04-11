@@ -36,6 +36,8 @@ No, it's simple to use. Install and navigate to the Tools menu to start optimizi
 Always make sure to backup your database before deleting data. While the plugin is safe to use, caution is always recommended.
 
 == Changelog ==
+= 1.3 =
+* Added WordPress Nonce for extra layer of security
 = 1.2 =
 * Added total autoload size display.
 * Enhanced the user interface for modern and aesthetic look.
