@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Enhanced Autoload Manager
-Version: 1.2
+Version: 1.3
 Description: Manages autoloaded data in the WordPress database, allowing for individual deletion or disabling of autoload entries.
 Author: Rai Ansar
 Author URI: https://raiansar.com
