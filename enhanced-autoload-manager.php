@@ -79,40 +79,32 @@ class Enhanced_Autoload_Manager {
         <?php
     }
 
-// Handle the actions for deleting and disabling autoloads
-function handle_actions() {
-    global $wpdb;
+    // Handle the actions for deleting and disabling autoloads
+    function handle_actions() {
+        if ( ! isset( $_GET['page'], $_GET['_wpnonce'], $_GET['action'], $_GET['option_name'] ) || $_GET['page'] !== 'enhanced-autoload-manager' ) {
+            return;
+        }
 
-    if ( ! isset( $_GET['page'] ) || $_GET['page'] !== 'enhanced-autoload-manager' ) {
-        return;
+        $action = sanitize_text_field( $_GET['action'] );
+        $nonce_action = $action . '_autoload_' . sanitize_text_field( $_GET['option_name'] );
+
+        if ( ! wp_verify_nonce( $_GET['_wpnonce'], $nonce_action ) ) {
+            wp_die( 'Nonce verification failed, action not allowed.', 'Nonce Verification Failed', array( 'response' => 403 ) );
+        }
+
+        // Sanitize and decode option_name after nonce verification
+        $option_name = sanitize_text_field( urldecode( $_GET['option_name'] ) );
+
+        global $wpdb;
+        if ( $action === 'delete' ) {
+            $wpdb->delete( $wpdb->options, [ 'option_name' => $option_name ] );
+        } elseif ( $action === 'disable' ) {
+            $wpdb->update( $wpdb->options, [ 'autoload' => 'no' ], [ 'option_name' => $option_name ] );
+        }
+
+        wp_redirect( admin_url( 'tools.php?page=enhanced-autoload-manager' ) );
+        exit;
     }
-
-    // Ensure that 'action' and 'option_name' are present before proceeding.
-    if ( ! isset( $_GET['action'], $_GET['option_name'] ) ) {
-        return;
-    }
-
-    // Prepare the nonce action based on the action and option name.
-    $action = sanitize_text_field( $_GET['action'] );
-    $option_name = sanitize_text_field( urldecode( $_GET['option_name'] ) );
-    $nonce_action = $action . '_autoload_' . $option_name;
-
-    // Verify the nonce first before any other processing.
-    if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( $_GET['_wpnonce'], $nonce_action ) ) {
-        wp_die( 'Nonce verification failed, action not allowed.', 'Nonce Verification Failed', array( 'response' => 403 ) );
-    }
-
-    // Perform the action since nonce is verified.
-    if ( $action === 'delete' ) {
-        $wpdb->delete( $wpdb->options, [ 'option_name' => $option_name ] );
-    } elseif ( $action === 'disable' ) {
-        $wpdb->update( $wpdb->options, [ 'autoload' => 'no' ], [ 'option_name' => $option_name ] );
-    }
-
-    wp_redirect( admin_url( 'tools.php?page=enhanced-autoload-manager' ) );
-    exit;
-}
-
 }
 
 // Instantiate the class
