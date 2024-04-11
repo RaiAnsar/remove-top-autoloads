@@ -1,12 +1,12 @@
 <?php
 /*
 Plugin Name: Enhanced Autoload Manager
-Version: 1.1
+Version: 1.2
 Description: Manages autoloaded data in the WordPress database, allowing for individual deletion or disabling of autoload entries.
-Author: Your Name
-Author URI: https://yourwebsite.com
-License: GPLv2 or later
-License URI: https://www.gnu.org/licenses/gpl-2.0.html
+Author: Rai Ansar
+Author URI: https://raiansar.com
+License: GPLv3 or later
+License URI: https://www.gnu.org/licenses/gpl-3.0.html
 Text Domain: enhanced-autoload-manager
 */
 
@@ -19,6 +19,13 @@ class Enhanced_Autoload_Manager {
         add_action( 'admin_menu', [ $this, 'add_menu_item' ] );
         // Handle actions for deleting and disabling autoloads
         add_action( 'admin_init', [ $this, 'handle_actions' ] );
+        // Enqueue custom styles
+        add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_custom_styles' ] );
+    }
+
+    // Enqueue custom styles
+    function enqueue_custom_styles() {
+        wp_enqueue_style( 'enhanced-autoload-manager-css', plugins_url( 'styles.css', __FILE__ ) );
     }
 
     // Add the menu item under Tools
@@ -29,29 +36,37 @@ class Enhanced_Autoload_Manager {
     // Display the plugin page
     function display_page() {
         global $wpdb;
+      // Get the total autoload size in MBs
+  		$total_autoload_size = $wpdb->get_var("SELECT SUM(LENGTH(option_value)) FROM {$wpdb->options} WHERE autoload = 'yes'");
+    	$total_autoload_size_mb = round($total_autoload_size / 1024 / 1024, 2);
 
         // Get the top 20 autoloads
-        $autoloads = $wpdb->get_results( "SELECT option_name, LENGTH(option_value) AS option_size FROM {$wpdb->options} WHERE autoload = 'yes' ORDER BY option_size DESC LIMIT 20" );
+        $autoloads = $wpdb->get_results("SELECT option_name, LENGTH(option_value) AS option_size FROM {$wpdb->options} WHERE autoload = 'yes' ORDER BY option_size DESC LIMIT 20");
 
         ?>
         <div class="wrap">
+          
             <h1><?php echo esc_html__( 'Enhanced Autoload Manager', 'enhanced-autoload-manager' ); ?></h1>
+          <h2><?php echo sprintf(esc_html__('Total Autoload Size: %s MB', 'enhanced-autoload-manager'), esc_html($total_autoload_size_mb)); ?></h2>
             <table class="wp-list-table widefat fixed striped">
                 <thead>
                     <tr>
                         <th><?php echo esc_html__( 'Option Name', 'enhanced-autoload-manager' ); ?></th>
-                        <th><?php echo esc_html__( 'Size (Bytes)', 'enhanced-autoload-manager' ); ?></th>
+                        <th><?php echo esc_html__( 'Size', 'enhanced-autoload-manager' ); ?></th>
                         <th><?php echo esc_html__( 'Actions', 'enhanced-autoload-manager' ); ?></th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ( $autoloads as $autoload ) : ?>
+                    <?php foreach ( $autoloads as $autoload ) :
+                        $size_kb = round( $autoload->option_size / 1024, 2 );
+                        $size_display = $size_kb < 1024 ? $size_kb . ' KB' : round( $size_kb / 1024, 2 ) . ' MB';
+                    ?>
                         <tr>
                             <td><?php echo esc_html( $autoload->option_name ); ?></td>
-                            <td><?php echo esc_html( $autoload->option_size ); ?></td>
+                            <td><?php echo esc_html( $size_display ); ?></td>
                             <td>
-                                <a href="<?php echo esc_url( wp_nonce_url( admin_url( 'tools.php?page=enhanced-autoload-manager&action=delete&option_name=' . urlencode( $autoload->option_name ) ), 'delete_autoload_' . $autoload->option_name ) ); ?>" class="button button-secondary"><?php echo esc_html__( 'Delete', 'enhanced-autoload-manager' ); ?></a>
-                                <a href="<?php echo esc_url( wp_nonce_url( admin_url( 'tools.php?page=enhanced-autoload-manager&action=disable&option_name=' . urlencode( $autoload->option_name ) ), 'disable_autoload_' . $autoload->option_name ) ); ?>" class="button button-secondary"><?php echo esc_html__( 'Disable Autoload', 'enhanced-autoload-manager' ); ?></a>
+                                <a href="<?php echo esc_url( wp_nonce_url( admin_url( 'tools.php?page=enhanced-autoload-manager&action=delete&option_name=' . urlencode( $autoload->option_name ) ), 'delete_autoload_' . $autoload->option_name ) ); ?>" class="eal-button eal-button-delete"><?php echo esc_html__( 'Delete', 'enhanced-autoload-manager' ); ?></a>
+                                <a href="<?php echo esc_url( wp_nonce_url( admin_url( 'tools.php?page=enhanced-autoload-manager&action=disable&option_name=' . urlencode( $autoload->option_name ) ), 'disable_autoload_' . $autoload->option_name ) ); ?>" class="eal-button eal-button-disable"><?php echo esc_html__( 'Disable', 'enhanced-autoload-manager' ); ?></a>
                             </td>
                         </tr>
                     <?php endforeach; ?>
